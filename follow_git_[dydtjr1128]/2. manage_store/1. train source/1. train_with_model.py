@@ -3,7 +3,8 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 # for seperating train and test set
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split  # for k-Fold Cross Validation
+                                 # Seperate train data to train and validation
 import os
 
 '''
@@ -21,7 +22,7 @@ WAVE_OUTPUT_FILENAME = "output.wav"
 '''
 
 
-TRAIN_DATA_PATH = "./data/train/"
+TRAIN_DATA_PATH = "../data/train/"
 
 # placeholder는 입력값 그릇, tf.Variable는 업데이트 대상
 # 나중에 feeding 되는거 보면 placeholder 대신, python 자체 전역변수를 사용한 듯.
@@ -71,13 +72,13 @@ def load_wave_generator(path):
                     3 최일구
                     4 문재인 대통령
                     '''
-                    label = [0 for i in range(len(folders))]
-                    label[tf_classes] = 1
+                    label = [0 for i in range(len(folders))]  # initialize [0 0 0 0 0]
+                    label[tf_classes] = 1  # one-hot-vector
 
                     for i in range(len(mfcc)):
-                        Y_label.append(label)
+                        Y_label.append(label)  # 꺽새랑 함께
                     # print(Y_label)
-            tf_classes = tf_classes + 1
+            tf_classes = tf_classes + 1  # 다음 training 화자 target으로 이동
     except PermissionError:
         print(path, "를 열수 없습니다.")
         pass
@@ -88,7 +89,7 @@ def load_wave_generator(path):
     X_train, X_test, Y_train, Y_test = train_test_split(np.array(X_data), np.array(Y_label))
 
     xy = (X_train, X_test, Y_train, Y_test)
-    np.save("./data.npy", xy)
+    np.save("./train_data.npy", xy)
 
 
 load_wave_generator(TRAIN_DATA_PATH)
@@ -106,7 +107,7 @@ print("Y_test :", np.shape(Y_test))
 ####################
 
 # 화자인식 NN 버전
-X_train, X_test, Y_train, Y_test = np.load("./data.npy")
+X_train, X_test, Y_train, Y_test = np.load("./train_data.npy")
 X_train = X_train.astype("float")
 X_test = X_test.astype("float")
 

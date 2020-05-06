@@ -234,20 +234,14 @@ X_test = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13, hop_length=int(sr*0.01),n_f
 3 최일구
 4 문재인 대통령
 '''
-label = [0 for i in range(5)] #class가 3개이니까 y_test만드는 과정
-label[2] = 1
+label = [0 for i in range(5)]
+label[2] = 1  # class가 5개, one-hot vector 만드는 과정
 Y_test = []
 for i in range(len(X_test)):
     Y_test.append(label)
 
 print(np.shape(X_test))
 print(np.shape(Y_test))
-
-
-#correct_prediction = tf.equal(tf.argmax(hypothesis, 1), tf.argmax(Y, 1))
-#accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-#print("Accuracy: ", sess.run(accuracy, feed_dict={X: X_test, Y:Y_test, keep_prob:1}))
-#print("Label :",sess.run(tf.argmax(Y_test,1)))
 
 correct_prediction = tf.equal(tf.argmax(hypothesis, 1), tf.argmax(Y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
