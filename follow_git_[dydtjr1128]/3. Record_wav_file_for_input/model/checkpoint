@@ -1,0 +1,2 @@
+model_checkpoint_path: "NN_model_100 epochs_trainig"
+all_model_checkpoint_paths: "NN_model_100 epochs_trainig"

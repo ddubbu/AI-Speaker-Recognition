@@ -30,7 +30,7 @@ hypothesis = graph.get_tensor_by_name("hypothesis:0")
 
 # test 데이터 가져오기
 Y_labels = ["유인나", "배철수", "이재은", "최일구", "문재인"]
-Y_pick = "이재은"
+Y_pick = "문재인"
 raw_test, sr = librosa.load("../data/test/test_"+Y_pick+".wav")
 X_test = librosa.feature.mfcc(y=raw_test, sr=sr, n_mfcc=num_input, hop_length=int(sr*0.01), n_fft=int(sr*0.02)).T
 
