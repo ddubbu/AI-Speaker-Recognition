@@ -8,7 +8,7 @@ feed_dict = {'w1': 4.0, 'w2': 8.0}
 
 # Define a test operation that we will restore
 w3 = w1 + w2
-w4 = tf.multiply(w3, b1, name="op_to_restore")
+w4 = tf.multiply(w3, b1, name="w4")
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
 
@@ -21,4 +21,6 @@ print(result)
 # Prints 24 which is sum of (w1+w2)*b1
 
 # Now, save the graph
-saver.save(sess, './model', global_step=1000)
+saver.save(sess, './model', global_step=1000)  # model-global_step.meta 로 저장됨
+# Model Netwrok status : (w1+w2)*2 , w4(operator) = A*B
+# result : (4+8)*2 = 24
