@@ -2,125 +2,24 @@ import librosa
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-# for seperating train and test set
-from sklearn.model_selection import train_test_split  # for k-Fold Cross Validation
-                                 # Seperate train data to train and validation
-import os
-
-'''
-# 소리 녹음을 위한 
-# 변수 설정 및 라이브러리 import 부분
-import pyaudio  # 마이크를 사용하기 위한 라이브러리
-import wave
-import matplotlib.pyplot as plt
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 44100  # 비트레이트 설정
-CHUNK = int(RATE / 10)  # 버퍼 사이즈 1초당 44100비트레이트 이므로 100ms단위
-RECORD_SECONDS = 5  # 녹음할 시간 설정
-WAVE_OUTPUT_FILENAME = "output.wav"
-'''
 
 
-TRAIN_DATA_PATH = "../data/train/"
 
-# placeholder는 입력값 그릇, tf.Variable는 업데이트 대상
-# 나중에 feeding 되는거 보면 placeholder 대신, python 자체 전역변수를 사용한 듯.
-X_train = []  # train_data 저장할 공간
-X_test = []
-Y_train = []
-Y_test = []
-tf_classes = 0
-
-
-def load_wave_generator(path):
-    try:  # 혹시
-        batch_waves = []
-        labels = []
-        X_data = []
-        Y_label = []
-        global X_train, X_test, Y_train, Y_test, tf_classes
-
-        folders = os.listdir(path)  # ['0', '1', '2', '3', '4']
-
-        for folder in folders:
-            files = os.listdir(path + "/" + folder)
-            # 폴더 이름과 그 폴더에 속하는 파일 갯수 출력
-            print("Foldername :", folder, "-", len(files), "파일")
-            for wav in files:
-                if not wav.endswith(".wav"):  # wave 파일만 읽어들임
-                    continue
-                else:
-                    # print("Filename :",wav)#.wav 파일이 아니면 continue
-                    y, sr = librosa.load(path + "/" + folder + "/" + wav)  # 소리파일 읽기
-                    # voice feature  by MFCC
-                    # ★ I can change it mel-spectrogram : librosa.feature.melspectrogram()
-                    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13, hop_length=int(sr * 0.01), n_fft=int(sr * 0.02)).T
-
-                    # label 0 ~ 4 통채로 X_data, Y_label에 넣어버리기
-                    X_data.extend(mfcc)  # Q. append와의 차이점? extend는 꺽새를 풀어서 원소만 넣기
-                    # print(len(mfcc))
-
-                    '''
-                    # labeling 中!
-                    # 나중에 학습시킬 data를 이처럼 잘 정리하는 게 좋겠다!
-                    # Q. 그리고 생각보다 많은 학습 데이터가 없어도 화자인식은 어느정도의 인식율이 나오는 것인가?
-                    
-                    0 유인나
-                    1 배철수
-                    2 이재은
-                    3 최일구
-                    4 문재인 대통령
-                    '''
-                    label = [0 for i in range(len(folders))]  # initialize [0 0 0 0 0]
-                    label[tf_classes] = 1  # one-hot-vector
-
-                    for i in range(len(mfcc)):
-                        Y_label.append(label)  # 꺽새랑 함께
-                    # print(Y_label)
-            tf_classes = tf_classes + 1  # 다음 training 화자 target으로 이동
-    except PermissionError:
-        print(path, "를 열수 없습니다.")
-        pass
-    # end loop
-    print("X_data :", np.shape(X_data))
-    print("Y_label :", np.shape(Y_label))
-
-    X_train, X_test, Y_train, Y_test = train_test_split(np.array(X_data), np.array(Y_label))
-
-    xy = (X_train, X_test, Y_train, Y_test)
-    np.save("./train_data.npy", xy)
-
-
-load_wave_generator(TRAIN_DATA_PATH)
-
-# t = np.array(X_train);
-# print("!!!!!!!!",t,t.shape,X_train)
-print(tf_classes, "개의 클래스!!")
-print("X_train :", np.shape(X_train))
-print("Y_train :", np.shape(Y_train))
-print("X_test :", np.shape(X_test))
-print("Y_test :", np.shape(Y_test))
-####################
-# clf = LogisticRegression()
-# clf.fit(X_train, Y_train)
-####################
-
-# 화자인식 NN 버전
-X_train, X_test, Y_train, Y_test = np.load("./train_data.npy")
+# Now, Model 구축 : 화자인식 NN 버전
+X_train, X_test, Y_train, Y_test = np.load("./train_data.npy", allow_pickle=True)
 X_train = X_train.astype("float")
 X_test = X_test.astype("float")
 
 tf.reset_default_graph()
 tf.set_random_seed(777)
 learning_rate = 0.001
-training_epochs = 100
-keep_prob = tf.placeholder(tf.float32)
-sd = 1 / np.sqrt(13)  # standard deviation 표준편차(표본표준편차라 1/root(n))
+training_epochs = 5  # <- 100 우선은 조금만 Training
+keep_prob = tf.placeholder(tf.float32)  # training except some data
+sd = 1 / np.sqrt(20)  # standard deviation 표준편차(표본표준편차라 1/root(n))
 
 # mfcc의 기본은 20
 # 20ms일 때216은 각 mfcc feature의 열이 216
-X = tf.placeholder(tf.float32, [None, 13])
+X = tf.placeholder(tf.float32, [None, 20])
 #
 Y = tf.placeholder(tf.float32, [None, tf_classes])
 
@@ -130,7 +29,7 @@ Y = tf.placeholder(tf.float32, [None, tf_classes])
 # 1차 히든레이어
 W1 = tf.get_variable("w1",
                      # tf.random_normal([216, 180], mean=0, stddev=sd),
-                     shape=[13, 256],
+                     shape=[20, 256],
                      initializer=tf.contrib.layers.xavier_initializer())
 b1 = tf.Variable(tf.random_normal([256], mean=0, stddev=sd), name="b1")
 L1 = tf.nn.relu(tf.matmul(X, W1) + b1)  # 1차 히든레이어는 'Relu' 함수를 쓴다.
@@ -205,7 +104,7 @@ cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
 # optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.01).minimize(cost)
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
-is_correct = tf.equal(tf.arg_max(hypothesis, 1), tf.arg_max(Y, 1))
+# is_correct = tf.equal(tf.arg_max(hypothesis, 1), tf.arg_max(Y, 1))
 
 batch_size = 1
 x_len = len(X_train)
@@ -242,33 +141,37 @@ print("Accuracy: ", sess.run(accuracy, feed_dict={X: X_test, Y: Y_test, keep_pro
 
 print('Learning Finished!')
 
-
-saver = tf.train.Saver()
-saver.save(sess, './my_voice_model2')
-
-y, sr = librosa.load("./data/test/test_이재은.wav")
-
-X_test = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13, hop_length=int(sr*0.01),n_fft=int(sr*0.02)).T
+saver = tf.train.Saver()  # 모델 특성이 드러나도록 파일명을 저장하자.
+saver.save(sess, './NN_model_'+ str(training_epochs) + ' epochs_trainig')
 
 
-label = [0 for i in range(5)]#class가 3개이니까 y_test만드는 과정
+########## Test 및 프로그램 실행 시작 ##########
+y, sr = librosa.load("../../data/test/test_이재은.wav")
+
+X_test = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20, hop_length=int(sr*0.01),n_fft=int(sr*0.02)).T
+
+
+label = [0 for i in range(5)] # class가 3개이니까 y_test만드는 과정
 label[2] = 1
 Y_test = []
 for i in range(len(X_test)):
     Y_test.append(label)
 
-print(np.shape(X_test))
-print(np.shape(Y_test))
-
-
-#correct_prediction = tf.equal(tf.argmax(hypothesis, 1), tf.argmax(Y, 1))
-#accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-#print("Accuracy: ", sess.run(accuracy, feed_dict={X: X_test, Y:Y_test, keep_prob:1}))
-#print("Label :",sess.run(tf.argmax(Y_test,1)))
+# print(np.shape(X_test))
+# print(np.shape(Y_test))
 
 correct_prediction = tf.equal(tf.argmax(hypothesis, 1), tf.argmax(Y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+
 print("predict")
 print(pd.value_counts(pd.Series(sess.run(tf.argmax(hypothesis, 1),
                                     feed_dict={X: X_test, keep_prob:1}))))
 print("Accuracy: ", sess.run(accuracy, feed_dict={X: X_test, Y:Y_test, keep_prob:1}))
+
+print("======= my code ======== 결과를 출력하도록")
+
+result = sess.run(hypothesis, feed_dict={X: X_test, keep_prob:1})
+print("hypothesis :", hypothesis)
+print("======= one-hot? ======== ")
+print(sess.run(tf.arg_max(result,1)))
