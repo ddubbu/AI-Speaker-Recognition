@@ -18,8 +18,9 @@ CHANNELS = 1
 RATE = 44100  # 비트레이트 설정
 CHUNK = int(RATE / 10)  # 버퍼 사이즈 1초당 44100비트레이트 이므로 100ms단위
 RECORD_SECONDS = 5  # 녹음할 시간 설정
-# WAVE_OUTPUT_FILENAME = "../output.wav"
-DATA_PATH = "./../data/train/"  # train_data_path  # .(상위폴더)/..(현재 폴더)/(원하는 폴더)
+# WAVE_OUTPUT_FILENAME = "./output.wav"  # 나중에 마이크로 녹음한 input file 인듯?
+DATA_PATH = "../data/train/"  # train_data_path  # .(현재폴더) ..(parent 폴더)
+
 X_train = []  # train_data 저장할 공간
 X_test = []
 Y_train = []
@@ -83,7 +84,7 @@ print("Y_test :", np.shape(Y_test))
 ####################
 
 # 화자인식 NN 버전
-X_train, X_test, Y_train, Y_test = np.load("../data.npy", allow_pickle=True)
+X_train, X_test, Y_train, Y_test = np.load("./data.npy", allow_pickle=True)
 X_train = X_train.astype("float")
 X_test = X_test.astype("float")
 
@@ -220,9 +221,9 @@ print('Learning Finished!')
 
 
 saver = tf.train.Saver()
-saver.save(sess, '../my_voice_model')
+saver.save(sess, './my_voice_model')
 
-y, sr = librosa.load("./../data/test/test_이재은.wav")
+y, sr = librosa.load("../data/test/test_이재은.wav")
 
 X_test = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13, hop_length=int(sr*0.01),n_fft=int(sr*0.02)).T
 
