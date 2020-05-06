@@ -14,7 +14,7 @@ import tensorflow as tf
 from record_source import record  # Q.빨간 줄은 무슨 의미이지...
 
 # whoIs = input("누구의 목소리인가요? ")
-whoIs = "문재인"
+whoIs = "배철수"
 RECORD_FILE_NAME = record(whoIs)
 
 ####################################

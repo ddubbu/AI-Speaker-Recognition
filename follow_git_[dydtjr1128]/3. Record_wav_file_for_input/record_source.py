@@ -26,7 +26,9 @@ def record(who):
                     channels=CHANNELS, #  모노로 마이크 열기
                     rate=RATE, #비트레이트
                     input=True,
-                    frames_per_buffer=CHUNK)  # CHUNK만큼 버퍼가 쌓인다.
+                    # input_device_index=1,
+                    frames_per_buffer=CHUNK)
+                      # CHUNK만큼 버퍼가 쌓인다.
 
     print("Start to record the audio.")
 
