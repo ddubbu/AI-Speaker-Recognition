@@ -66,7 +66,7 @@ def load_wave_generator(path):
     X_train, X_test, Y_train, Y_test = train_test_split(np.array(X_data), np.array(Y_label))
 
     xy = (X_train, X_test, Y_train, Y_test)
-    np.save("../data.npy", xy)
+    np.save("./data.npy", xy)
 
 
 load_wave_generator(DATA_PATH)
