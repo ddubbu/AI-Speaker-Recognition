@@ -3,25 +3,38 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
+# After read input data.
+
+# 나중에 feeding 되는거 보면 placeholder 대신, python 자체 전역변수를 사용한 듯.
+X_train = []  # train_data 저장할 공간
+X_test = []
+Y_train = []
+Y_test = []
+# tf_classes = 0
 
 
 # Now, Model 구축 : 화자인식 NN 버전
 X_train, X_test, Y_train, Y_test = np.load("./train_data.npy", allow_pickle=True)
+print("X_train :", np.shape(X_train))
+print("Y_train :", np.shape(Y_train))
+num_input = np.shape(X_train)[1]
+num_output = np.shape(Y_train)[1]  # tf_classes
+
+
 X_train = X_train.astype("float")
 X_test = X_test.astype("float")
 
 tf.reset_default_graph()
 tf.set_random_seed(777)
 learning_rate = 0.001
-training_epochs = 5  # <- 100 우선은 조금만 Training
-keep_prob = tf.placeholder(tf.float32)  # training except some data
-sd = 1 / np.sqrt(20)  # standard deviation 표준편차(표본표준편차라 1/root(n))
+training_epochs = 100  # <- 100 우선은 조금만 Training
+keep_prob = tf.placeholder(tf.float32, name="keep_prob")  # training except some data
+sd = 1 / np.sqrt(num_input)  # standard deviation 표준편차(표본표준편차라 1/root(n))
 
 # mfcc의 기본은 20
 # 20ms일 때216은 각 mfcc feature의 열이 216
-X = tf.placeholder(tf.float32, [None, 20])
-#
-Y = tf.placeholder(tf.float32, [None, tf_classes])
+X = tf.placeholder(tf.float32, [None, num_input], name="X")
+Y = tf.placeholder(tf.float32, [None, num_output], name="Y")
 
 # W = tf.Variable(tf.random_normal([216, 200]))
 # b = tf.Variable(tf.random_normal([200]))
@@ -29,7 +42,7 @@ Y = tf.placeholder(tf.float32, [None, tf_classes])
 # 1차 히든레이어
 W1 = tf.get_variable("w1",
                      # tf.random_normal([216, 180], mean=0, stddev=sd),
-                     shape=[20, 256],
+                     shape=[num_input, 256],
                      initializer=tf.contrib.layers.xavier_initializer())
 b1 = tf.Variable(tf.random_normal([256], mean=0, stddev=sd), name="b1")
 L1 = tf.nn.relu(tf.matmul(X, W1) + b1)  # 1차 히든레이어는 'Relu' 함수를 쓴다.
@@ -91,11 +104,15 @@ L7 = tf.nn.dropout(L7, keep_prob=keep_prob)
 
 # 최종 레이어
 W8 = tf.get_variable("w8",
-                     # tf.random_normal([50, tf_classes], mean=0, stddev=sd),
-                     shape=[128, tf_classes],
+                     # tf.random_normal([50, num_output], mean=0, stddev=sd),
+                     shape=[128, num_output],
                      initializer=tf.contrib.layers.xavier_initializer())
-b8 = tf.Variable(tf.random_normal([tf_classes], mean=0, stddev=sd), name="b8")
-hypothesis = tf.matmul(L7, W8) + b8
+b8 = tf.Variable(tf.random_normal([num_output], mean=0, stddev=sd), name="b8")
+
+# make it tensor type
+hypothesis = tf.matmul(L7, W8)  # tf.matmul(L7, W8) + b8
+hypothesis = tf.add(hypothesis, b8, name="hypothesis")
+
 
 # cost = tf.reduce_mean(-tf.reduce_sum(Y * tf.log(hypothesis), axis=1))
 cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
@@ -145,33 +162,44 @@ saver = tf.train.Saver()  # 모델 특성이 드러나도록 파일명을 저장
 saver.save(sess, './NN_model_'+ str(training_epochs) + ' epochs_trainig')
 
 
-########## Test 및 프로그램 실행 시작 ##########
-y, sr = librosa.load("../../data/test/test_이재은.wav")
-
-X_test = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20, hop_length=int(sr*0.01),n_fft=int(sr*0.02)).T
-
-
-label = [0 for i in range(5)] # class가 3개이니까 y_test만드는 과정
-label[2] = 1
-Y_test = []
-for i in range(len(X_test)):
-    Y_test.append(label)
-
-# print(np.shape(X_test))
-# print(np.shape(Y_test))
-
-correct_prediction = tf.equal(tf.argmax(hypothesis, 1), tf.argmax(Y, 1))
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
-
-print("predict")
-print(pd.value_counts(pd.Series(sess.run(tf.argmax(hypothesis, 1),
-                                    feed_dict={X: X_test, keep_prob:1}))))
-print("Accuracy: ", sess.run(accuracy, feed_dict={X: X_test, Y:Y_test, keep_prob:1}))
-
-print("======= my code ======== 결과를 출력하도록")
-
-result = sess.run(hypothesis, feed_dict={X: X_test, keep_prob:1})
-print("hypothesis :", hypothesis)
-print("======= one-hot? ======== ")
-print(sess.run(tf.arg_max(result,1)))
+# ########## Test 및 프로그램 실행 시작 ##########
+# y, sr = librosa.load("../../data/test/test_문재인대통령.wav")
+#
+# X_test = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=num_input, hop_length=int(sr*0.01),n_fft=int(sr*0.02)).T
+#
+# label = [0 for i in range(5)] # class가 3개이니까 y_test만드는 과정
+# label[2] = 1
+# Y_test = []
+# for i in range(len(X_test)):
+#     Y_test.append(label)
+#
+# # print(np.shape(X_test))
+# # print(np.shape(Y_test))
+#
+# # correct_prediction = tf.equal(tf.argmax(hypothesis, 1), tf.argmax(Y, 1))
+# # accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+# #
+# #
+# # print("predict")
+# # print(pd.value_counts(pd.Series(sess.run(tf.argmax(hypothesis, 1),
+# #                                     feed_dict={X: X_test, keep_prob:1}))))
+# # print("Accuracy: ", sess.run(accuracy, feed_dict={X: X_test, Y:Y_test, keep_prob:1}))
+#
+# print("======= Result ======== ")
+#
+# # result = sess.run(hypothesis, feed_dict={X: X_test, keep_prob:1})
+# # print("hypothesis :", result)
+# # print("======= one-hot? ======== ")
+# # hot_vector = sess.run(tf.arg_max(result,1))
+# # print(len(hot_vector))
+#
+#
+# # 아직 NN 구조 및 차원 이해는 못했지만, 최빈값이 답인 것을 유추하고
+# value_counts = pd.value_counts(pd.Series(sess.run(tf.argmax(hypothesis, 1),
+#                                     feed_dict={X: X_test, keep_prob:1})))
+# predict_result = value_counts.idxmax()  # 최빈값 가져옴.
+#         # 혹은 argmax을 사용하여 최대 값의 키를 얻음 : value_coutns.argmax()
+# print(predict_result)
+# labels = ["유인나", "배철수", "이재은", "최일구", "문재인"]
+#
+# print("이 화자는 :", labels[predict_result])

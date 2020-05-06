@@ -18,7 +18,7 @@ w2 = graph.get_tensor_by_name("w2:0")
 feed_dict ={w1:13.0,w2:17.0}
 
 # get_operation_by_name 안되는뎁...
-w4_new = graph.get_operation_by_name("w4:0")  # = (w1+w2)*2
+w4_new = graph.get_tensor_by_name("w4:0")  # = (w1+w2)*2
 # Q. 근데, placeholders 랑,
 # 마지막 tensor(노드) 만 가져오면 되는거 같네?
 # 왜냐하면, w3를 생략해서!
