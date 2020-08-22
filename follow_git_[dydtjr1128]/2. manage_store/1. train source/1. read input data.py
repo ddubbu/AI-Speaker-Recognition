@@ -58,6 +58,8 @@ def load_wave_generator(path):
                     mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20, hop_length=int(sr * 0.01),
                                                 n_fft=int(sr * 0.02)).T
 
+                    print(np.shape(mfcc))  # (502, 20)
+                    exit()
                     # label 0 ~ 4 통채로 X_data, Y_label에 넣어버리기
                     X_data.extend(mfcc)  # Q. append와의 차이점? extend는 꺽새를 풀어서 원소만 넣기
                     # print(len(mfcc))

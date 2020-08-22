@@ -54,7 +54,7 @@ def record(who):
     wf.close()
 
 
-    ## 우선, wave plot 생략
+    # 우선, wave plot 생략
     # spf = wave.open(WAVE_OUTPUT_FILENAME,'r')
     #
     # signal = spf.readframes(-1)

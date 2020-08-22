@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-
 ############ 오디오 녹음 ############
 
 from record_source import record  # Q.빨간 줄은 무슨 의미이지...
@@ -43,11 +42,11 @@ hypothesis = graph.get_tensor_by_name("hypothesis:0")
 Y_labels = ["유인나", "배철수", "이재은", "최일구", "문재인"]
 # Y_pick = "whoIs"
 raw_test, sr = librosa.load(RECORD_FILE_NAME)  # 여기에 !
+
 X_test = librosa.feature.mfcc(y=raw_test, sr=sr, n_mfcc=num_input, hop_length=int(sr*0.01), n_fft=int(sr*0.02)).T
 
 value_counts = pd.value_counts(pd.Series(sess.run(tf.argmax(hypothesis, 1),
                                     feed_dict={X: X_test, keep_prob:1})))
-print(value_counts)
 predict_result = value_counts.idxmax()  # 최빈값 가져옴.
         # 혹은 argmax을 사용하여 최대 값의 키를 얻음 : value_coutns.argmax()
 print(predict_result)

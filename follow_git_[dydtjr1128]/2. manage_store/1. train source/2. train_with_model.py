@@ -15,8 +15,9 @@ Y_test = []
 
 # Now, Model 구축 : 화자인식 NN 버전
 X_train, X_test, Y_train, Y_test = np.load("./train_data.npy", allow_pickle=True)
-print("X_train :", np.shape(X_train))
-print("Y_train :", np.shape(Y_train))
+print("X_train :", np.shape(X_train))  # (37650, 20)
+print("Y_train :", np.shape(Y_train))  # (37650, 5)
+
 num_input = np.shape(X_train)[1]
 num_output = np.shape(Y_train)[1]  # tf_classes
 

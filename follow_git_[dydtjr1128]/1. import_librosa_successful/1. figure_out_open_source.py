@@ -53,7 +53,7 @@ def load_wave_generator(path):
                 X_data.extend(mfcc)
                 # print(len(mfcc))
 
-                label = [0 for i in range(len(folders))]
+                label = [0 for i in range(len(folders))]  # ★ call by reference 걱정 안해도 됨. 리스트 새로 생성됨
                 label[tf_classes] = 1
 
                 for i in range(len(mfcc)):
